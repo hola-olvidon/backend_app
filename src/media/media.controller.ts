@@ -36,7 +36,7 @@ export class MediaController {
   @ApiResponse({ status: 201, description: 'Audio subido correctamente' })
   @ApiResponse({
     status: 400,
-    description: 'Formato de archivo no válido o excede los 10MB',
+    description: 'Formato de archivo no válido o excede los 50MB',
   })
   @ApiResponse({ status: 401, description: 'No autorizado' })
   @ApiConsumes('multipart/form-data')
@@ -47,7 +47,7 @@ export class MediaController {
         file: {
           type: 'string',
           format: 'binary',
-          description: 'Archivo de audio (MP3, WAV, OGG, M4A) máx. 10MB',
+          description: 'Archivo de audio (MP3, WAV, OGG, M4A) máx. 50MB',
         },
       },
     },
@@ -55,7 +55,7 @@ export class MediaController {
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
-        fileSize: 10 * 1024 * 1024, // Límite de 10 MB
+        fileSize: 50 * 1024 * 1024, // Límite de 50 MB
       },
       fileFilter: (req, file, callback) => {
         // Validar que sea un archivo de audio
