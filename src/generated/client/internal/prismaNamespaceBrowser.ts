@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Tenant: 'Tenant',
   Alarm: 'Alarm',
-  Configuracion: 'Configuracion'
+  Configuracion: 'Configuracion',
+  Audio: 'Audio'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -101,6 +102,17 @@ export const ConfiguracionScalarFieldEnum = {
 } as const
 
 export type ConfiguracionScalarFieldEnum = (typeof ConfiguracionScalarFieldEnum)[keyof typeof ConfiguracionScalarFieldEnum]
+
+
+export const AudioScalarFieldEnum = {
+  id: 'id',
+  nombre: 'nombre',
+  nombreArchivo: 'nombreArchivo',
+  urlAudio: 'urlAudio',
+  creadoEn: 'creadoEn'
+} as const
+
+export type AudioScalarFieldEnum = (typeof AudioScalarFieldEnum)[keyof typeof AudioScalarFieldEnum]
 
 
 export const SortOrder = {
