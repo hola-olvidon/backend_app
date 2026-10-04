@@ -399,7 +399,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Tenant: 'Tenant',
   Alarm: 'Alarm',
-  Configuracion: 'Configuracion'
+  Configuracion: 'Configuracion',
+  Audio: 'Audio'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -415,7 +416,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "alarm" | "configuracion"
+    modelProps: "tenant" | "alarm" | "configuracion" | "audio"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -641,6 +642,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Audio: {
+      payload: Prisma.$AudioPayload<ExtArgs>
+      fields: Prisma.AudioFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AudioFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AudioFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        findFirst: {
+          args: Prisma.AudioFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AudioFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        findMany: {
+          args: Prisma.AudioFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>[]
+        }
+        create: {
+          args: Prisma.AudioCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        createMany: {
+          args: Prisma.AudioCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AudioCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>[]
+        }
+        delete: {
+          args: Prisma.AudioDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        update: {
+          args: Prisma.AudioUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        deleteMany: {
+          args: Prisma.AudioDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AudioUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AudioUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>[]
+        }
+        upsert: {
+          args: Prisma.AudioUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AudioPayload>
+        }
+        aggregate: {
+          args: Prisma.AudioAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAudio>
+        }
+        groupBy: {
+          args: Prisma.AudioGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AudioGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AudioCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AudioCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -709,6 +784,17 @@ export const ConfiguracionScalarFieldEnum = {
 } as const
 
 export type ConfiguracionScalarFieldEnum = (typeof ConfiguracionScalarFieldEnum)[keyof typeof ConfiguracionScalarFieldEnum]
+
+
+export const AudioScalarFieldEnum = {
+  id: 'id',
+  nombre: 'nombre',
+  nombreArchivo: 'nombreArchivo',
+  urlAudio: 'urlAudio',
+  creadoEn: 'creadoEn'
+} as const
+
+export type AudioScalarFieldEnum = (typeof AudioScalarFieldEnum)[keyof typeof AudioScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -974,6 +1060,7 @@ export type GlobalOmitConfig = {
   tenant?: Prisma.TenantOmit
   alarm?: Prisma.AlarmOmit
   configuracion?: Prisma.ConfiguracionOmit
+  audio?: Prisma.AudioOmit
 }
 
 /* Types for Logging */

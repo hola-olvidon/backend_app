@@ -39,3 +39,11 @@ model Configuracion {
   clave String @id
   valor String
 }
+
+model Audio {
+  id            String   @id @default(uuid())
+  nombre        String
+  nombreArchivo String   @unique
+  urlAudio      String
+  creadoEn      DateTime @default(now())
+}

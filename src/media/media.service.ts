@@ -39,18 +39,22 @@ export class MediaService {
     this.bucketName = process.env.AWS_S3_BUCKET_NAME || '';
   }
 
-  async uploadAudio(file: {
-    originalname: string;
-    buffer: Buffer;
-    mimetype: string;
-  }): Promise<{ nombreOriginal: string; urlAudio: string }> {
+  async uploadAudio(
+    file: {
+      originalname: string;
+      buffer: Buffer;
+      mimetype: string;
+    },
+    nombre?: string,
+  ): Promise<{ nombre: string; nombreArchivo: string; urlAudio: string }> {
     if (!file) {
       throw new BadRequestException('No se ha proporcionado ningún archivo');
     }
 
     // Generar un nombre único para evitar sobreescribir archivos (ej: 123e4567-audio.mp3)
     const fileExtension = file.originalname.split('.').pop();
-    const fileName = `audios/${(uuidv4 as () => string)()}.${fileExtension}`;
+    const fileKey = `${(uuidv4 as () => string)()}.${fileExtension}`;
+    const fileName = `audios/${fileKey}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -67,35 +71,57 @@ export class MediaService {
     // Formato correcto para MinIO
     // Limpiamos la barra final del endpoint por si venía con "/"
     const cleanEndpoint = this.endpoint.replace(/\/$/, '');
+    const urlAudio = `${cleanEndpoint}/${this.bucketName}/${fileName}`;
 
-    // Retorna la URL pública del archivo en S3
+    // Guardamos el nombre editable en BD; por defecto se usa el nombre original del archivo.
+    const audio = await this.prisma.audio.create({
+      data: {
+        nombre: nombre?.trim() ? nombre.trim() : file.originalname,
+        nombreArchivo: fileKey,
+        urlAudio,
+      },
+    });
+
     return {
-      nombreOriginal: file.originalname,
-      urlAudio: `${cleanEndpoint}/${this.bucketName}/${fileName}`,
+      nombre: audio.nombre,
+      nombreArchivo: audio.nombreArchivo,
+      urlAudio: audio.urlAudio,
     };
   }
 
   async listAudios(): Promise<
     { nombre: string; nombreArchivo: string; urlAudio: string }[]
   > {
-    const command = new ListObjectsV2Command({
-      Bucket: this.bucketName,
-      Prefix: 'audios/',
-    });
-
-    const response = await this.s3Client.send(command);
+    const [response, dbAudios] = await Promise.all([
+      this.s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucketName,
+          Prefix: 'audios/',
+        }),
+      ),
+      this.prisma.audio.findMany(),
+    ]);
 
     if (!response.Contents) {
       return [];
     }
 
     const cleanEndpoint = this.endpoint.replace(/\/$/, '');
+    const dbByName = new Map(dbAudios.map((audio) => [audio.nombreArchivo, audio]));
 
     const audiosPromesas = response.Contents.filter(
       (item) => item.Key && item.Key !== 'audios/',
     ).map(async (item) => {
       const nombreArchivo = item.Key!.replace('audios/', '');
-      // Consultar metadatos del objeto
+      const urlAudio = `${cleanEndpoint}/${this.bucketName}/${item.Key}`;
+
+      // Nombre editable guardado en BD (fuente de verdad).
+      const dbRecord = dbByName.get(nombreArchivo);
+      if (dbRecord) {
+        return { nombre: dbRecord.nombre, nombreArchivo, urlAudio };
+      }
+
+      // Fallback para audios legacy sin registro en BD: nombre original desde metadata S3.
       const headCommand = new HeadObjectCommand({
         Bucket: this.bucketName,
         Key: item.Key!,
@@ -103,18 +129,45 @@ export class MediaService {
       const metadataResponse = await this.s3Client.send(headCommand);
 
       const rawName = metadataResponse.Metadata?.originalfilename;
-      const nombreOriginal = rawName
-        ? decodeURIComponent(rawName)
-        : item.Key!.replace('audios/', '');
+      const nombre = rawName ? decodeURIComponent(rawName) : nombreArchivo;
 
-      return {
-        nombre: nombreOriginal,
-        nombreArchivo: nombreArchivo,
-        urlAudio: `${cleanEndpoint}/${this.bucketName}/${item.Key}`,
-      };
+      return { nombre, nombreArchivo, urlAudio };
     });
 
     return Promise.all(audiosPromesas);
+  }
+
+  async renameAudio(
+    fileKey: string,
+    nombre?: string,
+  ): Promise<{ nombre: string; nombreArchivo: string; urlAudio: string }> {
+    const cleanName = nombre?.trim();
+    if (!cleanName) {
+      throw new BadRequestException('El nombre del audio no puede estar vacío');
+    }
+
+    const cleanEndpoint = this.endpoint.replace(/\/$/, '');
+    const urlAudio = `${cleanEndpoint}/${this.bucketName}/audios/${fileKey}`;
+
+    // Upsert: renombra el registro existente o lo crea si es un audio legacy sin BD.
+    const existing = await this.prisma.audio.findUnique({
+      where: { nombreArchivo: fileKey },
+    });
+
+    const audio = existing
+      ? await this.prisma.audio.update({
+          where: { id: existing.id },
+          data: { nombre: cleanName },
+        })
+      : await this.prisma.audio.create({
+          data: { nombre: cleanName, nombreArchivo: fileKey, urlAudio },
+        });
+
+    return {
+      nombre: audio.nombre,
+      nombreArchivo: audio.nombreArchivo,
+      urlAudio: audio.urlAudio,
+    };
   }
 
   async streamAudio(fileKey: string): Promise<{
@@ -168,6 +221,11 @@ export class MediaService {
       data: {
         urlAudio: null, // O cambiar por una URL por defecto
       },
+    });
+
+    // 4. Borrar el registro de audio (nombre editable) de la BD
+    await this.prisma.audio.deleteMany({
+      where: { nombreArchivo: fileKey },
     });
 
     return {

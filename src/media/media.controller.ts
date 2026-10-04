@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
+  Body,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -69,9 +71,9 @@ export class MediaController {
   )
   async uploadAudio(
     @UploadedFile() file: Parameters<MediaService['uploadAudio']>[0],
+    @Body('nombre') nombre?: string,
   ) {
-    const urlAudio = await this.mediaService.uploadAudio(file);
-    return { urlAudio };
+    return this.mediaService.uploadAudio(file, nombre);
   }
 
   @Get('audios')
@@ -85,6 +87,18 @@ export class MediaController {
   @ApiResponse({ status: 401, description: 'No autorizado' })
   async getAudios() {
     return this.mediaService.listAudios();
+  }
+
+  @Patch('audios/:fileKey')
+  @ApiOperation({ summary: 'Renombrar un audio subido (nombre visible)' })
+  @ApiResponse({ status: 200, description: 'Audio renombrado correctamente' })
+  @ApiResponse({ status: 400, description: 'Nombre inválido o vacío' })
+  @ApiResponse({ status: 401, description: 'No autorizado' })
+  async renameAudio(
+    @Param('fileKey') fileKey: string,
+    @Body('nombre') nombre: string,
+  ) {
+    return this.mediaService.renameAudio(fileKey, nombre);
   }
 
   @Get('audios/:fileKey')

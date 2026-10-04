@@ -32,3 +32,8 @@ export type Alarm = Prisma.AlarmModel
  * 
  */
 export type Configuracion = Prisma.ConfiguracionModel
+/**
+ * Model Audio
+ * 
+ */
+export type Audio = Prisma.AudioModel
